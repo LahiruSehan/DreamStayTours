@@ -24,15 +24,15 @@
                 <h2 id="lang-modal-title" data-lang-key="chooseLangTitle">Choose Language / භාෂාව තෝරන්න</h2>
                 <div class="lang-buttons">
                     <button class="lang-btn" data-lang="en">
-                        <span class="lang-preview lang-preview-en"></span>
+                        <span class="lang-preview">English</span>
                         English
                     </button>
                     <button class="lang-btn" data-lang="si">
-                        <span class="lang-preview lang-preview-si"></span>
+                        <span class="lang-preview">සිංහල</span>
                         සිංහල
                     </button>
                     <button class="lang-btn" data-lang="ja">
-                        <span class="lang-preview lang-preview-ja"></span>
+                        <span class="lang-preview">日本語</span>
                         日本語
                     </button>
                 </div>
@@ -49,7 +49,10 @@
             <header class="hero">
                 <canvas id="hero-particles-canvas"></canvas>
                 <div class="hero-content">
-                    <img src="https://i.ibb.co/k3v1b07/dreamstay-logo-white.png" alt="DreamStay Tours Logo" class="hero-logo">
+
+
+
+                    <img src="https://i.ibb.co/r2L2HNW8/Logo-DREAMFLIGHT2.png" alt="DreamStay Tours Logo" class="hero-logo">
                     <h1 class="hero-title" data-lang-key="heroTitle">DreamStay Tours — Travel like it’s another universe</h1>
                     <div class="hero-buttons">
                         <button class="cta-primary" id="custom-plan-btn" data-lang-key="createCustomPlan">Create a Custom Plan</button>
@@ -67,6 +70,10 @@
                         <button class="filter-tab active" data-country="Dashboard">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                             <span data-lang-key="filterDashboard">Dashboard</span>
+                        </button>
+                        <button class="filter-tab" data-country="Sri Lanka">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <span data-lang-key="filterSriLanka">Sri Lanka</span>
                         </button>
                         <button class="filter-tab" data-country="Thailand">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.88 5.72L20 9l-5.22 3.5L16.28 18 12 15.28 7.72 18l1.5-5.5L4 9l6.12-1.28L12 2z"></path><path d="M12 2v20"></path></svg>
@@ -91,6 +98,9 @@
                 <section id="details-section">
                     <div class="details-grid">
                         <!-- Stat cards will be injected here by JS -->
+                    </div>
+                    <div id="services-section-container">
+                        <!-- Services section will be injected here by JS -->
                     </div>
                     <div class="sponsors-section">
                         <h3 class="sponsors-title" data-lang-key="sponsorsTitle">Our Valued Partners</h3>
@@ -222,10 +232,31 @@
         </div>
     </div>
     
-    <!-- Sticky WhatsApp Button -->
-    <a href="#" id="contact-sticky-btn" class="contact-sticky-btn" target="_blank" rel="noopener noreferrer" aria-label="Contact us on WhatsApp">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.885-.002 2.024.63 3.965 1.739 5.618l-1.18 4.34a.5.5 0 0 0 .63.629l4.396-1.149z"></path></svg>
-    </a>
+    <!-- Chatbot Modal -->
+    <div id="chatbot-modal" class="chatbot-modal hidden" role="dialog" aria-modal="true" aria-labelledby="chatbot-title">
+        <div class="chatbot-header">
+            <h3 id="chatbot-title" data-lang-key="chatbotTitle">DreamStay Assistant</h3>
+            <button id="chatbot-close-btn" class="chatbot-close-btn" aria-label="Close chat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div id="chatbot-messages" class="chatbot-messages">
+            <!-- Messages will be injected here -->
+        </div>
+        <div id="chatbot-questions" class="chatbot-questions">
+            <!-- Question buttons will be injected here -->
+        </div>
+    </div>
+
+    <!-- Sticky Action Buttons -->
+    <div class="sticky-actions-container">
+        <button id="chatbot-sticky-btn" class="chatbot-sticky-btn" aria-label="Open chatbot">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9.45 12.75L8.25 15l-1.2-2.25L4.5 10.5l2.25-1.2L9 7l2.25 2.25L13.5 7l2.25 2.25 2.25 1.2-2.25 2.25L15.75 15l-2.25-2.25L11.25 15l-1.8-2.25z"/></svg>
+        </button>
+        <a href="#" id="contact-sticky-btn" class="contact-sticky-btn" target="_blank" rel="noopener noreferrer" aria-label="Contact us on WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.885-.002 2.024.63 3.965 1.739 5.618l-1.18 4.34a.5.5 0 0 0 .63.629l4.396-1.149z"></path></svg>
+        </a>
+    </div>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>

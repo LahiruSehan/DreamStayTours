@@ -31,7 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const customPlanBtn = document.getElementById('custom-plan-btn');
     const customPlanModal = document.getElementById('custom-plan-modal');
     const customPlanForm = document.getElementById('custom-plan-form');
-
+    // Chatbot elements
+    const chatbotStickyBtn = document.getElementById('chatbot-sticky-btn');
+    const chatbotModal = document.getElementById('chatbot-modal');
+    const chatbotCloseBtn = document.getElementById('chatbot-close-btn');
+    const chatbotMessages = document.getElementById('chatbot-messages');
+    const chatbotQuestions = document.getElementById('chatbot-questions');
 
     // --- State ---
     let currentLang = localStorage.getItem('dreamstay_lang') || null;
@@ -138,10 +143,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     const themeParticles = {
+        Dashboard: { count: 25, vx: [-0.2, 0.2], vy: [-0.5, -0.2], size: [15, 25], chars: ['', '', ''], color: 'rgba(255, 112, 67, 0.6)' },
         Japan: { count: 30, vx: [-0.2, 0.2], vy: [0.3, 0.8], size: [10, 20], char: '🌸', color: 'rgba(255, 182, 193, 0.5)' },
         Thailand: { count: 20, vx: [-0.1, 0.1], vy: [-0.5, -0.2], size: [15, 25], char: '🏮', color: 'rgba(255, 184, 77, 0.4)' },
         Malaysia: { count: 40, vx: [-0.3, 0.3], vy: [0.1, 0.5], size: [10, 20], char: '🌙', color: 'rgba(230, 230, 250, 0.6)' },
-        India: { count: 35, vx: [-0.2, 0.2], vy: [0.2, 0.7], size: [15, 25], chars: ['🕉️', '☪️', '✝️', '☸️', '☬'], colors: ['rgba(255, 153, 51, 0.7)', 'rgba(19, 141, 117, 0.7)', 'rgba(88, 144, 255, 0.7)', 'rgba(255, 215, 0, 0.7)', 'rgba(240, 178, 122, 0.7)'] }
+        India: { count: 35, vx: [-0.2, 0.2], vy: [0.2, 0.7], size: [15, 25], chars: ['🕉️', '☪️', '✝️', '☸️', '☬'], colors: ['rgba(255, 153, 51, 0.7)', 'rgba(19, 141, 117, 0.7)', 'rgba(88, 144, 255, 0.7)', 'rgba(255, 215, 0, 0.7)', 'rgba(240, 178, 122, 0.7)'] },
+        "Sri Lanka": { count: 30, vx: [-0.2, 0.2], vy: [0.3, 0.8], size: [15, 25], char: '🌊', color: 'rgba(96, 165, 250, 0.5)' }
     };
 
     // --- Functions ---
@@ -159,9 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
             renderFAQ();
             renderReviews();
             renderDashboard();
-            switchView(savedView);
+            switchView(savedView, true); // Pass true to force particle creation on initial load
             startHeroQuoteAnimation();
             startReviewCarousel();
+            renderChatbot();
 
             resizeHeroCanvas();
             createHeroParticles();
@@ -225,37 +233,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
-    const switchView = (view) => {
+    const switchView = (view, forceParticles = false) => {
+        const oldView = currentView;
         currentView = view;
         localStorage.setItem('dreamstay_view', view);
 
         filterTabs.forEach(tab => {
             tab.classList.toggle('active', tab.dataset.country === view);
         });
-
+        
+        const themeClass = view === 'Dashboard' ? '' : `theme-${view.toLowerCase().replace(' ', '')}`;
+        document.body.className = `country-view ${themeClass}`;
         if (view === 'Dashboard') {
-            document.body.className = '';
+            document.body.classList.remove('country-view');
         } else {
-            document.body.className = `country-view theme-${view.toLowerCase()}`;
             renderPackages(view);
             setupIntersectionObserver('.package-card.animate-in');
         }
-        
-        cancelAnimationFrame(animationFrameId);
-        const particleConfig = themeParticles[view];
-        if (particleConfig) {
-            createParticles(particleConfig);
-            if (!animationFrameId) animateParticles();
-        } else {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Only recreate particles if the view has changed
+        if (oldView !== view || forceParticles) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null; // Reset animation ID
+            const particleConfig = themeParticles[view];
+            if (particleConfig) {
+                createParticles(particleConfig);
+                animateParticles();
+            } else {
+                particles = []; // Clear particles if no config
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
         }
     };
     
     const renderDashboard = () => {
         const detailsGrid = detailsSection.querySelector('.details-grid');
         const sponsorsGrid = detailsSection.querySelector('.sponsors-grid');
+        const servicesContainer = document.getElementById('services-section-container');
+
         detailsGrid.innerHTML = '';
         sponsorsGrid.innerHTML = '';
+        servicesContainer.innerHTML = '';
 
         config.DETAILS_STATS.forEach(stat => {
             const card = document.createElement('div');
@@ -266,6 +284,47 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             detailsGrid.appendChild(card);
         });
+        
+        // Render Services Section
+        const servicesHTML = `
+            <div class="services-section">
+                <h3 class="services-title animate-in">${config.STRINGS[currentLang].servicesTitle}</h3>
+                <div class="services-grid">
+                    <div class="service-item animate-in">
+                        <div class="service-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1.5-1.5-3-1-4.5-.5L13 6 5 4.2 3.2 6l3.5 9.1L12 18l5.8 1.2zM21 3l-1.5 1.5M12.4 12.4 4 20"/></svg>
+                        </div>
+                        <p class="service-label">${config.STRINGS[currentLang].serviceAirTickets}</p>
+                    </div>
+                    <div class="service-item animate-in">
+                        <div class="service-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1Z"/><path d="m9 12 2 2 4-4"/></svg>
+                        </div>
+                        <p class="service-label">${config.STRINGS[currentLang].serviceVisa}</p>
+                    </div>
+                    <div class="service-item animate-in">
+                        <div class="service-icon">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 22v-6.57"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M14 15.43V22"/><path d="M15 16h-6"/><path d="M20 22v-6"/><path d="M18 11h.01"/><path d="M18 7h.01"/><path d="M22 19H8.3a1 1 0 0 1-.9-1.42l1.1-2.04a1 1 0 0 0-.9-1.55H2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v15a3 3 0 0 1-3 3Z"/></svg>
+                        </div>
+                        <p class="service-label">${config.STRINGS[currentLang].serviceHotel}</p>
+                    </div>
+                    <div class="service-item animate-in">
+                        <div class="service-icon">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M3 11V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5"/><path d="M8 16h8"/><circle cx="8" cy="20" r="2"/><circle cx="16" cy="20" r="2"/></svg>
+                        </div>
+                        <p class="service-label">${config.STRINGS[currentLang].serviceTransport}</p>
+                    </div>
+                    <div class="service-item animate-in">
+                        <div class="service-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 5h.01"/><path d="M15 5h-1.5a1.5 1.5 0 0 0 0 3h1.5v5.5a3.5 3.5 0 0 1-3.5 3.5h-1a3.5 3.5 0 0 1-3.5-3.5V5H4"/><path d="M6 5v5.5A1.5 1.5 0 0 0 7.5 12h1a1.5 1.5 0 0 0 1.5-1.5V5"/></svg>
+                        </div>
+                        <p class="service-label">${config.STRINGS[currentLang].serviceBreakfast}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        servicesContainer.innerHTML = servicesHTML;
+
 
         config.SPONSORS.forEach(sponsor => {
             const link = document.createElement('a');
@@ -376,11 +435,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeMediaLightbox = () => {
         mediaLightbox.classList.add('hidden');
         document.body.classList.remove('modal-open');
-        // Stop video playback by clearing the src to prevent background audio
         const iframe = mediaLightboxBody.querySelector('iframe');
         if (iframe) {
-            const tempSrc = iframe.src;
-            iframe.src = tempSrc;
+            iframe.src = iframe.src; // This reloads the iframe, stopping video playback
         }
         mediaLightboxBody.innerHTML = '';
     };
@@ -399,15 +456,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const formData = new FormData(customPlanForm);
         const data = Object.fromEntries(formData.entries());
-
         const message = config.STRINGS[currentLang].customPlanWhatsappMsg(data);
         const whatsappUrl = `https://wa.me/${config.WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-        
         window.open(whatsappUrl, '_blank');
         closeCustomPlanModal();
         customPlanForm.reset();
     };
-
 
     const renderFAQ = () => {
         faqAccordion.innerHTML = '';
@@ -430,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderReviews = () => {
         if (!reviewsGrid) return;
         reviewsGrid.innerHTML = '';
-        config.REVIEWS_DATA.forEach((review, index) => {
+        config.REVIEWS_DATA.forEach((review) => {
             const card = document.createElement('div');
             card.className = 'review-card animate-in';
             card.innerHTML = `
@@ -517,20 +571,81 @@ document.addEventListener('DOMContentLoaded', () => {
         const reviews = reviewsGrid.querySelectorAll('.review-card');
         if (reviews.length === 0) return;
 
+        let reviewWidth = 0;
+        const calculateReviewWidth = () => {
+            if(reviews.length > 0) {
+                 const card = reviews[0];
+                 const gap = parseFloat(getComputedStyle(reviewsGrid).gap);
+                 reviewWidth = card.offsetWidth + gap;
+            }
+        };
+        calculateReviewWidth();
+
         reviewCarouselIntervalId = setInterval(() => {
             currentReviewIndex = (currentReviewIndex + 1) % totalReviews;
-            
-            const card = reviews[0];
-            const cardWidth = card.offsetWidth;
-            const gap = parseFloat(getComputedStyle(reviewsGrid).gap);
-            const scrollAmount = (cardWidth + gap) * currentReviewIndex;
+            reviewsGrid.style.transform = `translateX(-${reviewWidth * currentReviewIndex}px)`;
 
-            reviewsGrid.style.transform = `translateX(-${scrollAmount}px)`;
-        }, 5000);
+            if (currentReviewIndex === totalReviews -1) {
+                setTimeout(() => {
+                    reviewsGrid.style.transition = 'none';
+                    currentReviewIndex = -1; // Prepare for next cycle reset
+                }, 800);
+                 setTimeout(() => {
+                    reviewsGrid.style.transform = `translateX(0)`;
+                    reviewsGrid.style.transition = 'transform 0.8s cubic-bezier(0.65, 0, 0.35, 1)';
+                 }, 850);
+            }
+
+        }, 2000);
+        
+        window.addEventListener('resize', calculateReviewWidth);
     };
 
     const stopReviewCarousel = () => {
         clearInterval(reviewCarouselIntervalId);
+    };
+    
+    // --- Chatbot Functions ---
+    const addMessageToChat = (text, type = 'bot') => {
+        const messageEl = document.createElement('div');
+        messageEl.className = `chat-message ${type}`;
+        messageEl.textContent = text;
+        chatbotMessages.appendChild(messageEl);
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight; // Auto-scroll to bottom
+    };
+
+    const renderChatbot = () => {
+        chatbotMessages.innerHTML = '';
+        chatbotQuestions.innerHTML = '';
+
+        addMessageToChat(config.CHATBOT_DATA[`welcome_${currentLang}`]);
+        
+        config.CHATBOT_DATA.questions.forEach((q, index) => {
+            const questionBtn = document.createElement('button');
+            questionBtn.className = 'chatbot-question-btn';
+            questionBtn.textContent = q[`q_${currentLang}`];
+            questionBtn.dataset.index = index;
+            chatbotQuestions.appendChild(questionBtn);
+        });
+    };
+    
+    const handleQuestionClick = (e) => {
+        const btn = e.target.closest('.chatbot-question-btn');
+        if (!btn) return;
+        
+        const questionIndex = btn.dataset.index;
+        const questionData = config.CHATBOT_DATA.questions[questionIndex];
+        
+        addMessageToChat(questionData[`q_${currentLang}`], 'user');
+        
+        setTimeout(() => {
+            addMessageToChat(questionData[`a_${currentLang}`], 'bot');
+        }, 500);
+
+        chatbotQuestions.innerHTML = `
+            <button class="chatbot-question-btn" id="ask-another-btn">${config.STRINGS[currentLang].chatbotAskAnother}</button>
+        `;
+        document.getElementById('ask-another-btn').addEventListener('click', renderChatbot);
     };
 
     // --- Event Listeners ---
@@ -575,11 +690,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(customPlanForm) customPlanForm.addEventListener('submit', handleCustomPlanSubmit);
 
+    // Chatbot Listeners
+    if(chatbotStickyBtn) chatbotStickyBtn.addEventListener('click', () => chatbotModal.classList.remove('hidden'));
+    if(chatbotCloseBtn) chatbotCloseBtn.addEventListener('click', () => chatbotModal.classList.add('hidden'));
+    if(chatbotQuestions) chatbotQuestions.addEventListener('click', handleQuestionClick);
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if (!packageModal.classList.contains('hidden')) closePackageModal();
             if (!mediaLightbox.classList.contains('hidden')) closeMediaLightbox();
             if (!customPlanModal.classList.contains('hidden')) closeCustomPlanModal();
+            if (!chatbotModal.classList.contains('hidden')) chatbotModal.classList.add('hidden');
         }
     });
 
@@ -601,7 +722,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const review = config.REVIEWS_DATA.find(r => r.name === reviewName);
             if (!review || !review.photos || review.photos.length === 0) return;
             
-            // For simplicity, just show the first photo in the media lightbox
             openMediaLightbox({
                 type: 'photo',
                 url: review.photos[0],
